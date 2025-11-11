@@ -49,11 +49,12 @@ evaluation_metrics = {
 - **Safety First:** Multi-layer content moderation for sensitive healthcare domain
 - **Production Ready:** Scalable, secure, and monitored enterprise architecture
 
-## Notebook: OpenSource RAG Flow and Evaluation   <br/>
+## Notebook: 
+### OpenSource RAG Flow and Evaluation   <br/>
 (Notebook in the folder `/notebooks/step1_data_preparation.ipynb`) <br/>
 [RAG Test Notebook: Step 1](https://github.com/padmapria/RAG-Care-Mental-Wellness-Assistant/blob/master/notebooks/step1_rag_test.ipynb)
 
-## Notebook: Azure RAG Flow and Evaluation   <br/>
+### Azure RAG Flow and Evaluation   <br/>
 [RAG Azure Implementation: Step 2](https://github.com/padmapria/Productionizing-RAG-Mental-Wellness-Assistant-with-Azure-AI-Search-OpenAI-Safety-Framework/blob/main/notebooks/step2_rag_Azure.ipynb)
 
 

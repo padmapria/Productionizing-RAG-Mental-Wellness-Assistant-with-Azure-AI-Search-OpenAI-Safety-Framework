@@ -1,0 +1,91 @@
+name: RAG Care CICD Workflow
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  mlops:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step to checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Set up Python environment and install dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'  # Specify your Python version here
+
+      - name: Install dependencies
+        run: 
+          pip install -r requirements.txt  # Adjusted path to requirements.txt
+
+      # Run tests using run_tests.py
+      - name: Run tests
+        run: |
+          cd services
+          python app/tests/run_tests.py
+
+      # Change directory back to the root before starting Docker services
+      - name: Change directory to root
+        run: cd ..
+
+      # Uninstall requirements to keep the environment clean
+      - name: Uninstall requirements
+        run: 
+          pip uninstall -y -r requirements.txt
+          
+      # Start Docker services using Docker Compose
+      - name: Start Docker services
+        run: |
+          docker compose up -d  # Start your services in the background
+
+      # Check if services are up
+      - name: Check services status
+        run: |
+          echo "Waiting for services to be up..."
+          for i in {1..10}; do
+            if [[ $(docker ps | grep 'Up') ]]; then
+              echo "Services are up!"
+              break
+            fi
+            echo "Services are not ready yet. Waiting..."
+            sleep 5
+          done
+          if [[ ! $(docker ps | grep 'Up') ]]; then
+            echo "Services did not start in time."
+            exit 1
+          fi
+
+      # Tear down Docker services after tests
+      - name: Tear down Docker services
+        run: |
+          docker compose down
+
+      # Log in to AWS ECR
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_REGISTRY }}
+
+      # Build Docker image with Docker Compose
+      - name: Build Docker image with Docker Compose
+        run: |
+          docker compose build  # Build the images defined in docker-compose.yml
+          
+      # Tag and push the Docker image to ECR
+      - name: Push Docker image to ECR
+        run: |
+          docker tag my-app:latest ${{ secrets.AWS_ECR_REGISTRY }}/my-app:latest
+          docker push ${{ secrets.AWS_ECR_REGISTRY }}/my-app:latest
+
+      # Deploy to AWS ECS
+      - name: Deploy to AWS ECS
+        run: |
+          aws ecs update-service --cluster my-cluster --service my-service --force-new-deployment
